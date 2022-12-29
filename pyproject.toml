@@ -1,0 +1,23 @@
+[tool.poetry]
+name = "git-acp"
+version = "0.1.0"
+description = "Python lib for git add, commit and push operations."
+authors = ["Federico Olivieri <lvrfrc87@gmail.com>"]
+license = "Apache-2.0"
+readme = "README.md"
+homepage = "https://github.com/lvrfrc87/git-acp.git"
+repository = "git@github.com:lvrfrc87/git-acp.git"
+keywords = ["git", "python"]
+include = [
+    "LICENSE",
+    "README.md",
+]
+
+[tool.poetry.dependencies]
+python = "^3.7"
+
+[tool.poetry.dev-dependencies]
+bandit = "*"
+black = "*"
+flake8 = "*"
+pylint = "*"
