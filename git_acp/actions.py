@@ -1,7 +1,4 @@
-import os
-import stat
-import tempfile
-from utils import get_bin_path
+from utils import get_bin_path, write_ssh_wrapper, set_git_ssh
 
 class Git:
     def __init__(self, **kwargs):
@@ -28,63 +25,11 @@ class Git:
                 else:
                     self.ssh_opts = "-o StrictHostKeyChecking=no"
 
-        self.ssh_wrapper, self.tmpdir = self.write_ssh_wrapper()
-        self.set_git_ssh(self.ssh_wrapper, self.ssh_key_file, self.ssh_opts)
+        self.ssh_wrapper, self.tmpdir = write_ssh_wrapper()
+        set_git_ssh(self.ssh_wrapper, self.ssh_key_file, self.ssh_opts)
         self.tmpdir.cleanup()
 
-    def write_ssh_wrapper(self):
-        tmpdir = tempfile.TemporaryDirectory()
-        try:
-            if os.access(tmpdir, os.W_OK | os.R_OK | os.X_OK):
-                fd, wrapper_path = tempfile.mkstemp(prefix=tmpdir + "/")
-            else:
-                raise OSError
-        except (IOError, OSError):
-            fd, wrapper_path = tempfile.mkstemp()
-
-        fh = os.fdopen(fd, "w+b")
-        template = """
-        #!/bin/sh
-        if [ -z "$GIT_SSH_OPTS" ]; then
-            BASEOPTS=""
-        else
-            BASEOPTS=$GIT_SSH_OPTS
-        fi
-
-        # Let ssh fail rather than prompt
-        BASEOPTS="$BASEOPTS -o BatchMode=yes"
-
-        if [ -z "$GIT_KEY" ]; then
-            ssh $BASEOPTS "$@"
-        else
-            ssh -i "$GIT_KEY" -o IdentitiesOnly=yes $BASEOPTS "$@"
-        fi
-        """.encode(
-            "UTF-8"
-        )
-        fh.write(template)
-        fh.close()
-        st = os.stat(wrapper_path)
-        os.chmod(wrapper_path, st.st_mode | stat.S_IEXEC)
-        return wrapper_path, tmpdir
-
-    def set_git_ssh(self, ssh_wrapper, key_file, ssh_opts):
-
-        if os.environ.get("GIT_SSH"):
-            del os.environ["GIT_SSH"]
-        os.environ["GIT_SSH"] = ssh_wrapper
-
-        if os.environ.get("GIT_KEY"):
-            del os.environ["GIT_KEY"]
-
-        if key_file:
-            os.environ["GIT_KEY"] = key_file
-
-        if os.environ.get("GIT_SSH_OPTS"):
-            del os.environ["GIT_SSH_OPTS"]
-
-        if ssh_opts:
-            os.environ["GIT_SSH_OPTS"] = ssh_opts
+    
 
     # def add(self):
     #     """
