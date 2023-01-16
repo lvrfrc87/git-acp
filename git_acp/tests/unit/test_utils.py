@@ -2,7 +2,6 @@ import os
 import sys
 import os.path as path
 sys.path.append(path.abspath(path.join(__file__ ,"../..")))
-import tempfile
 
 from unittest import TestCase, main
 from utils import get_bin_path, write_ssh_wrapper, set_git_ssh

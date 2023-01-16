@@ -1,14 +1,14 @@
 from utils import get_bin_path, write_ssh_wrapper, set_git_ssh, run_command
-from messages import FailingMessage
-
+from messages import failing_message
+import json
 class Git:
     def __init__(self, **kwargs):
 
         self.url = kwargs["url"]
-        self.path = kwargs["path"]
-        self.git_path = kwargs["executable"] or get_bin_path("git")
-        self.add_file = kwargs["add"] or "."
-        ssh_params = kwargs["ssh_params"] or None
+        self.path = kwargs.get("path", ".")
+        self.git_path = kwargs.get("executable", get_bin_path("git"))
+        self.add_file = kwargs.get("add", ".")
+        ssh_params = kwargs.get("ssh_params")
 
         if ssh_params:
             self.ssh_key_file = (
@@ -27,9 +27,9 @@ class Git:
                 else:
                     self.ssh_opts = "-o StrictHostKeyChecking=no"
 
-        self.ssh_wrapper, self.tmpdir = write_ssh_wrapper()
-        set_git_ssh(self.ssh_wrapper, self.ssh_key_file, self.ssh_opts)
-        self.tmpdir.cleanup()
+            self.ssh_wrapper, self.tmpdir = write_ssh_wrapper()
+            set_git_ssh(self.ssh_wrapper, self.ssh_key_file, self.ssh_opts)
+            self.tmpdir.cleanup()
 
     
 
@@ -44,14 +44,14 @@ class Git:
 
         return: null
         """
+
         command = [self.git_path, "add", "--"]
         command.extend(self.add_file)
 
         rc, output, error = run_command(command, cwd=self.path)
-
         if rc == 0:
             return
-        FailingMessage(rc, command, output, error)
+        raise Exception(json.dumps(failing_message(rc, command, output, error), indent=4))
 
     # def status(self):
     #     """
