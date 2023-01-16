@@ -1,4 +1,5 @@
-from utils import get_bin_path, write_ssh_wrapper, set_git_ssh
+from utils import get_bin_path, write_ssh_wrapper, set_git_ssh, run_command
+from messages import FailingMessage
 
 class Git:
     def __init__(self, **kwargs):
@@ -6,6 +7,7 @@ class Git:
         self.url = kwargs["url"]
         self.path = kwargs["path"]
         self.git_path = kwargs["executable"] or get_bin_path("git")
+        self.add_file = kwargs["add"] or "."
         ssh_params = kwargs["ssh_params"] or None
 
         if ssh_params:
@@ -31,29 +33,25 @@ class Git:
 
     
 
-    # def add(self):
-    #     """
-    #     Run git add and stage changed files.
+    def add(self):
+        """
+        Run git add and stage changed files.
 
-    #     args:
-    #         * module:
-    #             type: dict()
-    #             descrition: Ansible basic module utilities and module arguments.
+        args:
+            * module:
+                type: dict()
+                descrition: Ansible basic module utilities and module arguments.
 
-    #     return: null
-    #     """
+        return: null
+        """
+        command = [self.git_path, "add", "--"]
+        command.extend(self.add_file)
 
-    #     add = self.module.params["add"]
-    #     command = [self.git_path, "add", "--"]
+        rc, output, error = run_command(command, cwd=self.path)
 
-    #     command.extend(add)
-
-    #     rc, output, error = self.module.run_command(command, cwd=self.path)
-
-    #     if rc == 0:
-    #         return
-
-    #     FailingMessage(self.module, rc, command, output, error)
+        if rc == 0:
+            return
+        FailingMessage(rc, command, output, error)
 
     # def status(self):
     #     """

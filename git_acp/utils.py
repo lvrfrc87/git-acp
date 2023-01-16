@@ -3,6 +3,7 @@ import sys
 import stat
 import shutil
 import tempfile
+import subprocess
 
 def get_bin_path(executable):
     """
@@ -69,3 +70,9 @@ def set_git_ssh(ssh_wrapper, key_file, ssh_opts):
 
     if ssh_opts:
         os.environ["GIT_SSH_OPTS"] = ssh_opts
+
+def run_command(command, cwd):
+    pipes = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
+    stdout, stderr = pipes.communicate()
+    rc = pipes.returncode
+    return rc, stdout, stderr
