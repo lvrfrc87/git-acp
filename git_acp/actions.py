@@ -53,33 +53,33 @@ class Git:
             return
         raise Exception(json.dumps(failing_message(rc, command, output, error), indent=4))
 
-    # def status(self):
-    #     """
-    #     Run git status and check if repo has changes.
+    def status(self):
+        """
+        Run git status and check if repo has changes.
 
-    #     args:
-    #         * module:
-    #             type: dict()
-    #             descrition: Ansible basic module utilities and module arguments.
-    #     return:
-    #         * data:
-    #             type: set()
-    #             description: list of files changed in repo.
-    #     """
-    #     data = set()
-    #     command = [self.git_path, "status", "--porcelain"]
+        args:
+            * module:
+                type: dict()
+                descrition: Ansible basic module utilities and module arguments.
+        return:
+            * data:
+                type: set()
+                description: list of files changed in repo.
+        """
+        data = set()
+        command = [self.git_path, "status", "--porcelain"]
 
-    #     rc, output, error = self.module.run_command(command, cwd=self.path)
+        rc, output, error = run_command(command, cwd=self.path)
 
-    #     if rc == 0:
-    #         for line in output.split("\n"):
-    #             file_name = line.split(" ")[-1].strip()
-    #             if file_name:
-    #                 data.add(file_name)
-    #         return data
+        if rc == 0:
+            for line in output.split("\n"):
+                file_name = line.split(" ")[-1].strip()
+                if file_name:
+                    data.add(file_name)
+            return data
 
-    #     else:
-    #         FailingMessage(self.module, rc, command, output, error)
+        else:
+            raise Exception(json.dumps(failing_message(rc, command, output, error), indent=4))
 
     # def commit(self):
     #     """
