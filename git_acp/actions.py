@@ -1,6 +1,7 @@
 from utils import get_bin_path, write_ssh_wrapper, set_git_ssh, run_command
 from messages import failing_message
 import json
+
 class Git:
     def __init__(self, **kwargs):
 
@@ -46,7 +47,7 @@ class Git:
         """
 
         command = [self.git_path, "add", "--"]
-        command.extend(self.add_file)
+        command.append(self.add_file)
 
         rc, output, error = run_command(command, cwd=self.path)
         if rc == 0:
