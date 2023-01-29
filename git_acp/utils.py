@@ -72,7 +72,7 @@ def set_git_ssh(ssh_wrapper, key_file, ssh_opts):
         os.environ["GIT_SSH_OPTS"] = ssh_opts
 
 def run_command(command, cwd):
-    pipes = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd, shell=True)
+    pipes = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, cwd=cwd)
     stdout, stderr = pipes.communicate()
     rc = pipes.returncode
     return rc, stdout, stderr

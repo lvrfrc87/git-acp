@@ -19,7 +19,7 @@ class TestActions(TestCase):
         if clone != 0:
             raise Exception("Something went wrong while cloning the repo.")
 
-        self.random_filename = tempfile.NamedTemporaryFile(dir="/tmp/git-acp-integration-tests")
+        self.random_filename = tempfile.NamedTemporaryFile(dir="/tmp/git-acp-integration-tests", suffix=".txt", delete=False)
 
     def tearDown(self) -> None:
         os.system("rm -rf /tmp/git-acp-integration-tests")
@@ -27,11 +27,11 @@ class TestActions(TestCase):
     def test_git_add(self):
         params = {
             "url": "https://gitlab.com/networkAutomation/git-acp-integration-tests.git",
-            "path": "/tmp/",
+            "path": "/tmp/git-acp-integration-tests/",
             "git_path": "sbin/",
-            "add": self.random_filename.name
+            "add": self.random_filename.name.split("/")[-1]
         }
         my_git = Git(**params)
-        breakpoint()
         result = my_git.add()
+        self.assertIsNone(result)
 

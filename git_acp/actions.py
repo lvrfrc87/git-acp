@@ -48,7 +48,6 @@ class Git:
 
         command = [self.git_path, "add", "--"]
         command.append(self.add_file)
-
         rc, output, error = run_command(command, cwd=self.path)
         if rc == 0:
             return
