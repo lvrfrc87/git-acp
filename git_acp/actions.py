@@ -9,6 +9,7 @@ class Git:
         self.path = kwargs.get("path", ".")
         self.git_path = kwargs.get("executable", get_bin_path("git"))
         self.add_file = kwargs.get("add", ".")
+        self.comment = kwargs.get("comment")
         ssh_params = kwargs.get("ssh_params")
 
         if ssh_params:
@@ -81,31 +82,30 @@ class Git:
         else:
             raise Exception(json.dumps(failing_message(rc, command, output, error), indent=4))
 
-    # def commit(self):
-    #     """
-    #     Run git commit and commit files in repo.
+    def commit(self):
+        """
+        Run git commit and commit files in repo.
 
-    #     args:
-    #         * module:
-    #             type: dict()
-    #             descrition: Ansible basic module utilities and module arguments.
-    #     return:
-    #         * result:
-    #             type: dict()
-    #             desription: returned output from git commit command and changed status
-    #     """
-    #     result = dict()
-    #     comment = self.module.params["comment"]
-    #     command = [self.git_path, "commit", "-m", comment]
+        args:
+            * module:
+                type: dict()
+                descrition: Ansible basic module utilities and module arguments.
+        return:
+            * result:
+                type: dict()
+                desription: returned output from git commit command and changed status
+        """
+        result = dict()
+        command = [self.git_path, "commit", "-m", self.comment]
 
-    #     rc, output, error = self.module.run_command(command, cwd=self.path)
+        rc, output, error = run_command(command, cwd=self.path)
 
-    #     if rc == 0:
-    #         if output:
-    #             result.update({"git_commit": output, "changed": True})
-    #             return result
-    #     else:
-    #         FailingMessage(self.module, rc, command, output, error)
+        if rc == 0:
+            if output:
+                result.update({"git_commit": output, "changed": True})
+                return result
+        else:
+            raise Exception(json.dumps(failing_message(rc, command, output, error), indent=4))
 
     # def push(self):
     #     """

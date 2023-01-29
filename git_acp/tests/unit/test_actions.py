@@ -25,7 +25,8 @@ class TestActions(TestCase):
             "url": "https://gitlab.com/networkAutomation/git-acp-integration-tests.git",
             "path": "/tmp/git-acp-integration-tests/",
             "git_path": "sbin/",
-            "add": self.random_filename
+            "add": self.random_filename,
+            "comment": f"Add file: {self.random_filename}" 
         }
 
     def tearDown(self) -> None:
@@ -41,4 +42,12 @@ class TestActions(TestCase):
         my_git.add()
         result = my_git.status()
         self.assertIn(self.random_filename, result)
+
+    def test_git_commit(self):
+        my_git = Git(**self.params)
+        my_git.add()
+        my_git.status()
+        result = my_git.commit()
+        self.assertIn(f"Add file: {self.random_filename}\n 1 file changed", result["git_commit"])
+        self.assertTrue(result["changed"])
 
