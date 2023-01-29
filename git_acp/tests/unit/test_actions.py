@@ -26,7 +26,12 @@ class TestActions(TestCase):
             "path": "/tmp/git-acp-integration-tests/",
             "git_path": "sbin/",
             "add": self.random_filename,
-            "comment": f"Add file: {self.random_filename}" 
+            "comment": f"Add file: {self.random_filename}",
+            "mode": "https",
+            "branch": "main",
+            "remote": "origin",
+            "user": "Federico87",
+            "token": self.gitlab_token
         }
 
     def tearDown(self) -> None:
@@ -51,3 +56,5 @@ class TestActions(TestCase):
         self.assertIn(f"Add file: {self.random_filename}\n 1 file changed", result["git_commit"])
         self.assertTrue(result["changed"])
 
+    def test_push_same_url_same_origin(self):
+        pass

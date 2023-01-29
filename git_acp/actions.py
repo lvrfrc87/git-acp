@@ -10,6 +10,12 @@ class Git:
         self.git_path = kwargs.get("executable", get_bin_path("git"))
         self.add_file = kwargs.get("add", ".")
         self.comment = kwargs.get("comment")
+        self.mode = kwargs.get("mode", "https")
+        self.branch = kwargs.get("branch", "main")
+        self.remote = kwargs.get("remote", "origin")
+        self.push_option = kwargs.get("push_option")
+        self.user = kwargs.get("user")
+        self.token = kwargs.get("token")
         ssh_params = kwargs.get("ssh_params")
 
         if ssh_params:
@@ -107,127 +113,115 @@ class Git:
         else:
             raise Exception(json.dumps(failing_message(rc, command, output, error), indent=4))
 
-    # def push(self):
-    #     """
-    #     Set URL and remote if required. Push changes to remote repo.
+    def push(self):
+        """
+        Set URL and remote if required. Push changes to remote repo.
 
-    #     args:
-    #         * module:
-    #             type: dict()
-    #             descrition: Ansible basic module utilities and module arguments.
-    #     return:
-    #         * result:
-    #             type: dict()
-    #             desription: returned output from git push command and updated changed status.
-    #     """
-    #     url = self.module.params["url"]
-    #     mode = self.module.params["mode"]
-    #     branch = self.module.params["branch"]
-    #     remote = self.module.params["remote"]
-    #     push_option = self.module.params.get("push_option")
-    #     user = self.module.params.get("user")
-    #     token = self.module.params.get("token")
+        args:
+            * module:
+                type: dict()
+                descrition: Ansible basic module utilities and module arguments.
+        return:
+            * result:
+                type: dict()
+                desription: returned output from git push command and updated changed status.
+        """
 
-    #     command = [self.git_path, "push", remote, branch]
+        def set_url():
+            """
+            Set URL and remote if required.
 
-    #     def set_url():
-    #         """
-    #         Set URL and remote if required.
+            args:
+                * module:
+                    type: dict()
+                    descrition: Ansible basic module utilities and module arguments.
+            return: null
+            """
+            command = [self.git_path, "remote", "get-url", "--all", self.remote]
 
-    #         args:
-    #             * module:
-    #                 type: dict()
-    #                 descrition: Ansible basic module utilities and module arguments.
-    #         return: null
-    #         """
-    #         command = [self.git_path, "remote", "get-url", "--all", remote]
+            rc, output, _error = run_command(command, cwd=self.path)
 
-    #         rc, output, _error = self.module.run_command(command, cwd=self.path)
+            if rc == 128:
+                if self.mode == "https":
+                    if self.url.startswith("https://"):
+                        command = [
+                            self.git_path,
+                            "remote",
+                            "add",
+                            self.remote,
+                            f"https://{self.user}:{self.token}@{self.utl[:8]}",
+                        ]
+                    else:
+                        raise Exception("HTTPS mode selected but not HTTPS URL provided")
+                else:
+                    command = [self.git_path, "remote", "add", self.remote, self.url]
 
-    #         if rc == 128:
-    #             if mode == "https":
-    #                 if url.startswith("https://"):
-    #                     command = [
-    #                         self.git_path,
-    #                         "remote",
-    #                         "add",
-    #                         remote,
-    #                         "https://{0}:{1}@{2}".format(user, token, url[8:]),
-    #                     ]
-    #                 else:
-    #                     self.module.fail_json(
-    #                         msg="HTTPS mode selected but not HTTPS URL provided"
-    #                     )
-    #             else:
-    #                 command = [self.git_path, "remote", "add", remote, url]
+                rc, output, error = run_command(command, cwd=self.path)
 
-    #             rc, output, error = self.module.run_command(command, cwd=self.path)
+                if rc == 0:
+                    return
 
-    #             if rc == 0:
-    #                 return
-    #             FailingMessage(self.module, rc, command, output, error)
+            elif rc == 0 and output != self.url:
+                command = ["git", "remote", "remove", self.remote]
+                rc, output, error = run_command(command, cwd=self.path)
+                if rc == 0:
+                    if self.mode == "https":
+                        if self.url.startswith("https://"):
+                            command = [
+                                self.git_path,
+                                "remote",
+                                "add",
+                                self.remote,
+                                f"https://{self.user}:{self.token}@{self.url[8:]}",
+                            ]
+                        else:
+                            self.module.fail_json(
+                                msg="HTTPS mode selected but no HTTPs URL provided"
+                            )
+                    else:
+                        command = [self.git_path, "remote", "add", self.remote, self.url]
 
-    #         elif rc == 0 and output != url:
-    #             rc, output, error = self.module.run_command(
-    #                 ["git", "remote", "remove", remote], cwd=self.path
-    #             )
+                    rc, output, error = self.module.run_command(command, cwd=self.path)
+                    if rc == 0:
+                        return
+                    raise Exception(json.dumps(failing_message(rc, command, output, error), indent=4))
+                else:
+                    raise Exception(json.dumps(failing_message(rc, command, output, error), indent=4))
 
-    #             if rc == 0:
-    #                 if mode == "https":
-    #                     if url.startswith("https://"):
-    #                         command = [
-    #                             self.git_path,
-    #                             "remote",
-    #                             "add",
-    #                             remote,
-    #                             "https://{0}:{1}@{2}".format(user, token, url[8:]),
-    #                         ]
-    #                     else:
-    #                         self.module.fail_json(
-    #                             msg="HTTPS mode selected but no HTTPs URL provided"
-    #                         )
-    #                 else:
-    #                     command = [self.git_path, "remote", "add", remote, url]
+            elif rc == 0:
+                return
 
-    #                 rc, output, error = self.module.run_command(command, cwd=self.path)
-    #                 if rc == 0:
-    #                     return
-    #                 FailingMessage(self.module, rc, command, output, error)
-    #             else:
-    #                 FailingMessage(self.module, rc, command, output, error)
+        def push_cmd():
+            """
+            Set URL and remote if required. Push changes to remote repo.
 
-    #         elif rc == 0:
-    #             return
+            args:
+                * path:
+                    type: path
+                    descrition: git repo local path.
+                * cmd_push:
+                    type: list()
+                    descrition: list of commands to perform git push operation.
+            return:
+                * result:
+                    type: dict()
+                    desription: returned output from git push command and updated changed status.
+            """
+            result = dict()
 
-    #     def push_cmd():
-    #         """
-    #         Set URL and remote if required. Push changes to remote repo.
+            rc, output, error = self.module.run_command(command, cwd=self.path)
 
-    #         args:
-    #             * path:
-    #                 type: path
-    #                 descrition: git repo local path.
-    #             * cmd_push:
-    #                 type: list()
-    #                 descrition: list of commands to perform git push operation.
-    #         return:
-    #             * result:
-    #                 type: dict()
-    #                 desription: returned output from git push command and updated changed status.
-    #         """
-    #         result = dict()
+            if rc == 0:
+                result.update({"git_push": str(error) + str(output), "changed": True})
+                return result
+            else:
+                FailingMessage(self.module, rc, command, output, error)
 
-    #         rc, output, error = self.module.run_command(command, cwd=self.path)
+        command = [self.git_path, "push", self.remote, self.branch]
 
-    #         if rc == 0:
-    #             result.update({"git_push": str(error) + str(output), "changed": True})
-    #             return result
-    #         else:
-    #             FailingMessage(self.module, rc, command, output, error)
+        if self.push_option:
+            command.insert(3, f"--push-option={self.push_option}")
 
-    #     if push_option:
-    #         command.insert(3, "--push-option={0} ".format(push_option))
+        set_url()
 
-    #     set_url()
-
-    #     return push_cmd()
+        return push_cmd()
