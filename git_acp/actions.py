@@ -38,9 +38,7 @@ class Git:
             self.ssh_wrapper, self.tmpdir = write_ssh_wrapper()
             set_git_ssh(self.ssh_wrapper, self.ssh_key_file, self.ssh_opts)
             self.tmpdir.cleanup()
-
     
-
     def add(self):
         """
         Run git add and stage changed files.
@@ -149,19 +147,18 @@ class Git:
                             "remote",
                             "add",
                             self.remote,
-                            f"https://{self.user}:{self.token}@{self.utl[:8]}",
+                            f"https://{self.user}:{self.token}@{self.url[8:]}",
                         ]
                     else:
                         raise Exception("HTTPS mode selected but not HTTPS URL provided")
                 else:
                     command = [self.git_path, "remote", "add", self.remote, self.url]
-
-                rc, output, error = run_command(command, cwd=self.path)
+                rc, output, _error = run_command(command, cwd=self.path)
 
                 if rc == 0:
                     return
+            elif rc == 0 and self.url not in output:
 
-            elif rc == 0 and output != self.url:
                 command = ["git", "remote", "remove", self.remote]
                 rc, output, error = run_command(command, cwd=self.path)
                 if rc == 0:
@@ -175,13 +172,10 @@ class Git:
                                 f"https://{self.user}:{self.token}@{self.url[8:]}",
                             ]
                         else:
-                            self.module.fail_json(
-                                msg="HTTPS mode selected but no HTTPs URL provided"
-                            )
+                            raise Exception("HTTPS mode selected but no HTTPs URL provided")
                     else:
                         command = [self.git_path, "remote", "add", self.remote, self.url]
-
-                    rc, output, error = self.module.run_command(command, cwd=self.path)
+                    rc, output, error = run_command(command, cwd=self.path)
                     if rc == 0:
                         return
                     raise Exception(json.dumps(failing_message(rc, command, output, error), indent=4))
@@ -208,14 +202,14 @@ class Git:
                     desription: returned output from git push command and updated changed status.
             """
             result = dict()
-
-            rc, output, error = self.module.run_command(command, cwd=self.path)
+            rc, output, error = run_command(command, cwd=self.path)
 
             if rc == 0:
                 result.update({"git_push": str(error) + str(output), "changed": True})
                 return result
             else:
-                FailingMessage(self.module, rc, command, output, error)
+                raise Exception(json.dumps(failing_message(rc, command, output, error), indent=4))
+
 
         command = [self.git_path, "push", self.remote, self.branch]
 
@@ -223,5 +217,6 @@ class Git:
             command.insert(3, f"--push-option={self.push_option}")
 
         set_url()
+
 
         return push_cmd()

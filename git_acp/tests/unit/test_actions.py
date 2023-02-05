@@ -31,7 +31,8 @@ class TestActions(TestCase):
             "branch": "main",
             "remote": "origin",
             "user": "Federico87",
-            "token": self.gitlab_token
+            "token": self.gitlab_token,
+            "push_option": "--no-cicd"
         }
 
     def tearDown(self) -> None:
@@ -57,4 +58,32 @@ class TestActions(TestCase):
         self.assertTrue(result["changed"])
 
     def test_push_same_url_same_origin(self):
-        pass
+        my_git = Git(**self.params)
+        my_git.add()
+        my_git.status()
+        my_git.commit()
+        result = my_git.push()
+        self.assertTrue(result['changed'])
+
+    def test_push_same_url_different_origin(self):
+        self.params.update({"remote": "different"})
+        my_git = Git(**self.params)
+        my_git.add()
+        my_git.status()
+        my_git.commit()
+        result = my_git.push()
+        self.assertTrue(result['changed'])
+
+    def test_push_different_url_same_origin(self):
+        self.params.update({"url": "https://gitlab.com/networkAutomation/i-do-not-exist.git"})
+        my_git = Git(**self.params)
+        my_git.add()
+        my_git.status()
+        my_git.commit()
+        # pull latest to avoid error when pushing
+        try:
+            result = my_git.push()
+        except Exception:
+            os.system(f"git -C /tmp/git-acp-integration-tests/ pull origin main")
+            result = my_git.push()
+        self.assertIn("i-do-not-exist", result['git_push'])
